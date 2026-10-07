@@ -75,9 +75,22 @@
     });
   }
 
+  // The upstream dashboard adds an "Update available" link when its own version
+  // is behind GitHub. This image is the dashboard, so that link is removed.
+  function hideUpdateButton() {
+    document.querySelectorAll("a").forEach(function (a) {
+      var href = a.getAttribute("href") || "";
+      var text = (a.textContent || "").replace(/\s+/g, " ").trim();
+      if (href.indexOf("selfhosted/maintenance/upgrade") !== -1 || text === "Update available") {
+        a.remove();
+      }
+    });
+  }
+
   function scan() {
     brandTitle();
     brandIcons();
+    hideUpdateButton();
     document.querySelectorAll("img").forEach(brandImage);
     brandText(document.body);
   }
