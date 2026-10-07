@@ -1,0 +1,34 @@
+# Builds pa-netbird-dashboard from the official NetBird dashboard image and
+# runs that image on the existing NetBird Docker network.
+# Traefik and netbird-server stay the official containers in /opt/netbird.
+services:
+  dashboard:
+    image: pa-netbird-dashboard:${PA_IMAGE_TAG:-local}
+    build:
+      context: .
+      args:
+        NETBIRD_DASHBOARD_TAG: ${NETBIRD_DASHBOARD_TAG:-v2.90.3}
+    container_name: netbird-dashboard
+    env_file:
+      - path: dashboard.env
+        required: false
+    environment:
+      PA_BRAND_NAME: ${PA_BRAND_NAME:-PA Netbird}
+      PA_LOGO_SRC: /brand/logo.svg
+    restart: unless-stopped
+    networks:
+      - netbird
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.netbird-dashboard.rule: Host(`${NETBIRD_DOMAIN:-netbird.predictaanalytics.io}`)
+      traefik.http.routers.netbird-dashboard.entrypoints: websecure
+      traefik.http.routers.netbird-dashboard.tls: "true"
+      traefik.http.routers.netbird-dashboard.tls.certresolver: letsencrypt
+      traefik.http.routers.netbird-dashboard.service: dashboard
+      traefik.http.routers.netbird-dashboard.priority: "1"
+      traefik.http.services.dashboard.loadbalancer.server.port: "80"
+
+networks:
+  netbird:
+    external: true
+    name: ${NETBIRD_DOCKER_NETWORK:-netbird_netbird}

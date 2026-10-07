@@ -1,0 +1,9 @@
+.git
+.DS_Store
+.env
+dashboard.env
+smtp.env
+config.yaml
+README.md
+scripts
+*.md

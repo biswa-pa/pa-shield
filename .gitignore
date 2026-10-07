@@ -1,0 +1,7 @@
+.DS_Store
+.env
+dashboard.env
+smtp.env
+config.yaml
+__pycache__/
+*.pyc
