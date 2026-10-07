@@ -13,7 +13,7 @@ services:
       - path: dashboard.env
         required: false
     environment:
-      PA_BRAND_NAME: ${PA_BRAND_NAME:-PA Netbird}
+      PA_BRAND_NAME: ${PA_BRAND_NAME:-PA Shield}
       PA_LOGO_SRC: /brand/logo.svg
     restart: unless-stopped
     networks:

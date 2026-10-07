@@ -4,7 +4,7 @@
 # file. The script is allowed by the dashboard Content-Security-Policy (script-src 'self').
 set -euo pipefail
 
-BRAND_NAME="${PA_BRAND_NAME:-PA Netbird}"
+BRAND_NAME="${PA_BRAND_NAME:-PA Shield}"
 LOGO_SRC="${PA_LOGO_SRC:-/brand/logo.svg}"
 SRC="/opt/pa-netbird/brand"
 DEST="/usr/share/nginx/html/brand"
@@ -12,7 +12,7 @@ HTML_ROOT="/usr/share/nginx/html"
 MARKER='src="/brand/inject.js"'
 
 mkdir -p "$DEST"
-cp -f "${SRC}/logo.svg" "${SRC}/icon.png" "${DEST}/"
+cp -f "${SRC}/logo.svg" "${SRC}/icon.png" "${SRC}/email-provider.js" "${DEST}/"
 awk -v brand="$BRAND_NAME" -v logo="$LOGO_SRC" '
 {
   gsub("__PA_BRAND_NAME__", brand)
@@ -21,7 +21,7 @@ awk -v brand="$BRAND_NAME" -v logo="$LOGO_SRC" '
   print
 }
 ' "${SRC}/inject.js" > "${DEST}/inject.js"
-chmod 644 "${DEST}/logo.svg" "${DEST}/icon.png" "${DEST}/inject.js"
+chmod 644 "${DEST}/logo.svg" "${DEST}/icon.png" "${DEST}/email-provider.js" "${DEST}/inject.js"
 
 init_running() {
   local cmdline
@@ -65,7 +65,7 @@ while IFS= read -r -d '' file; do
     continue
   fi
   if grep -q '</head>' "$file"; then
-    sed -i 's|</head>|<script src="/brand/inject.js"></script></head>|' "$file"
+    sed -i 's|</head>|<script src="/brand/inject.js"></script><script src="/brand/email-provider.js"></script></head>|' "$file"
     patched=$((patched + 1))
   fi
 done < <(find "$HTML_ROOT" -type f -name '*.html' ! -path '*/_next/*' -print0)

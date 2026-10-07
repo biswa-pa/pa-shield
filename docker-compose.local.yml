@@ -29,8 +29,26 @@ services:
       AUTH_SILENT_REDIRECT_URI: /nb-silent-auth
       NGINX_SSL_PORT: "443"
       LETSENCRYPT_DOMAIN: none
-      PA_BRAND_NAME: ${PA_BRAND_NAME:-PA Netbird}
+      PA_BRAND_NAME: ${PA_BRAND_NAME:-PA Shield}
       PA_LOGO_SRC: /brand/logo.svg
+    depends_on: [netbird-server]
+    restart: unless-stopped
+
+  reset:
+    build: ./reset
+    image: pa-netbird-reset:local
+    env_file:
+      - path: smtp.env
+        required: false
+    environment:
+      PUBLIC_URL: ${PUBLIC_URL:-http://localhost:8088}
+      PA_BRAND_NAME: ${PA_BRAND_NAME:-PA Shield}
+      IDP_DB: /data/idp.db
+      NETBIRD_API: http://netbird-server:80
+      SETTINGS_PATH: /config/email-settings.json
+    volumes:
+      - netbird_data:/data
+      - reset_config:/config
     depends_on: [netbird-server]
     restart: unless-stopped
 
@@ -41,8 +59,9 @@ services:
       - ./brand:/brand:ro
     ports:
       - "8088:80"
-    depends_on: [dashboard, netbird-server]
+    depends_on: [dashboard, netbird-server, reset]
     restart: unless-stopped
 
 volumes:
   netbird_data:
+  reset_config:

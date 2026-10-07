@@ -1,6 +1,15 @@
 (function () {
   var BRAND = "__PA_BRAND_NAME__";
   var LOGO = "__PA_LOGO_SRC__";
+  var ICON = "__PA_ICON_SRC__";
+
+  // Matches "NetBird" and an already-applied "PA Shield" so the brand is never
+  // prefixed twice. Replacing a match with BRAND is then idempotent.
+  var NAME = /(?:\bPA\s+)?netbird/gi;
+
+  function rebrand(text) {
+    return text.replace(NAME, BRAND);
+  }
 
   function isNetbird(value) {
     return typeof value === "string" && /netbird/i.test(value);
@@ -12,21 +21,18 @@
     var alt = img.getAttribute("alt") || "";
     if (!isNetbird(src) && !isNetbird(alt)) return;
     img.src = LOGO;
+    img.removeAttribute("srcset");
     img.alt = BRAND;
     img.dataset.paBranded = "1";
-    img.style.maxHeight = "40px";
+    img.style.maxHeight = "36px";
     img.style.width = "auto";
     img.style.height = "auto";
-    img.style.background = "#fff";
-    img.style.borderRadius = "8px";
-    img.style.padding = "2px 8px";
     img.style.objectFit = "contain";
   }
 
   function brandTitle() {
-    if (document.title && /netbird/i.test(document.title)) {
-      document.title = document.title.replace(/netbird/gi, BRAND);
-    }
+    var t = rebrand(document.title || "");
+    if (t !== document.title) document.title = t;
   }
 
   function brandIcons() {
@@ -34,39 +40,60 @@
     if (!links.length && document.head) {
       var created = document.createElement("link");
       created.rel = "icon";
-      created.href = LOGO;
+      created.href = ICON;
       document.head.appendChild(created);
       return;
     }
     links.forEach(function (link) {
-      var href = link.getAttribute("href") || "";
-      if (isNetbird(href) || /favicon|apple-icon/i.test(href)) {
-        link.href = LOGO;
+      if (link.getAttribute("href") !== ICON) {
+        link.type = "image/png";
+        link.removeAttribute("sizes");
+        link.href = ICON;
       }
     });
   }
 
-  function scan(root) {
+  var SKIP = { SCRIPT: 1, STYLE: 1, TEXTAREA: 1, INPUT: 1, CODE: 1, PRE: 1 };
+
+  // Visible text only. Skips code blocks and form values so commands such as
+  // "netbird up" and setup keys stay correct.
+  function brandText(root) {
+    if (!root) return;
+    var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode: function (n) {
+        var p = n.parentNode;
+        if (!p || SKIP[p.tagName] || (p.closest && p.closest("code,pre"))) {
+          return NodeFilter.FILTER_REJECT;
+        }
+        return rebrand(n.nodeValue) !== n.nodeValue ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+      },
+    });
+    var nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(function (n) {
+      n.nodeValue = rebrand(n.nodeValue);
+    });
+  }
+
+  function scan() {
     brandTitle();
     brandIcons();
-    var scope = root && root.querySelectorAll ? root : document;
-    if (scope.tagName === "IMG") brandImage(scope);
-    scope.querySelectorAll("img").forEach(brandImage);
+    document.querySelectorAll("img").forEach(brandImage);
+    brandText(document.body);
   }
 
   function start() {
-    scan(document);
-    var observer = new MutationObserver(function (records) {
-      records.forEach(function (record) {
-        record.addedNodes.forEach(function (node) {
-          if (!node || node.nodeType !== 1) return;
-          if (node.tagName === "IMG") brandImage(node);
-          else if (node.querySelectorAll) scan(node);
-        });
+    scan();
+    var queued = false;
+    var observer = new MutationObserver(function () {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(function () {
+        queued = false;
+        scan();
       });
-      brandTitle();
     });
-    observer.observe(document.documentElement, { childList: true, subtree: true });
+    observer.observe(document.documentElement, { childList: true, subtree: true, characterData: true });
   }
 
   if (document.readyState === "loading") {

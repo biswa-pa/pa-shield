@@ -9,6 +9,8 @@ COPY brand/ /opt/pa-netbird/brand/
 COPY docker/apply-branding.sh /opt/pa-netbird/apply-branding.sh
 COPY docker/pa-branding.ini /tmp/pa-branding.ini
 COPY docker/apply-theme.sh /opt/pa-netbird/apply-theme.sh
+COPY brand/favicon.ico /usr/share/nginx/html/favicon.ico
+COPY brand/apple-icon.png /usr/share/nginx/html/apple-icon.png
 
 RUN chmod 755 /opt/pa-netbird/apply-branding.sh /opt/pa-netbird/apply-theme.sh \
     && /opt/pa-netbird/apply-theme.sh \

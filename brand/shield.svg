@@ -1,14 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 506 110" width="506" height="110">
-  <g font-family="Poppins, Montserrat, Inter, 'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="84">
-    <text x="0" y="86" fill="#ffffff" textLength="104" lengthAdjust="spacingAndGlyphs">PA</text>
-    <svg x="116" y="8" width="94" height="94" viewBox="0 0 64 64"><defs>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
     <linearGradient id="sf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a1a52"/><stop offset="1" stop-color="#1a0a22"/></linearGradient>
     <linearGradient id="so" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb23d"/><stop offset="1" stop-color="#fd9904"/></linearGradient>
   </defs>
   <path d="M32 3.5 56.5 11.5V30c0 15.5-10.2 25.8-24.5 30.5C17.700 55.800 7.500 45.500 7.500 30V11.500Z" fill="url(#sf)" stroke="url(#so)" stroke-width="3.2" stroke-linejoin="round"/>
   <path d="M32 11 50 16.800V30c0 11.200-7.300 19-18 23.200C21.300 49 14 41.200 14 30V16.800Z" fill="none" stroke="#fd9904" stroke-opacity=".28" stroke-width="1.2" stroke-linejoin="round"/>
   <path d="M22 32.500l7.200 7.200L43 24.500" fill="none" stroke="url(#so)" stroke-width="5.200" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>
-    <text x="224" y="86" fill="#FD9904" textLength="262" lengthAdjust="spacingAndGlyphs">Shield</text>
-  </g>
 </svg>
