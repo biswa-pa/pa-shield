@@ -48,6 +48,31 @@ scripts/build-images.sh --save pa-shield.tar     # one file for offline use, the
 
 The version comes from `VERSION`. The brand name and logo are built into the images, so changing them means editing `brand/` and rebuilding.
 
+## Use it instead of the NetBird image
+
+The dashboard image is a drop-in for `netbirdio/dashboard`. It reads the same environment variables (`NETBIRD_MGMT_API_ENDPOINT`, `AUTH_AUTHORITY`, `AUTH_CLIENT_ID` and so on), so on a host that already runs NetBird, change only the image line:
+
+```yaml
+dashboard:
+  # image: netbirdio/dashboard:v2.90.3
+  image: ghcr.io/biswa-pa/pa-shield/dashboard:latest
+  env_file: ./dashboard.env      # unchanged
+```
+
+Then `docker compose up -d dashboard`. The server (`netbirdio/netbird-server`) stays as it is. The other two images are optional extras:
+
+| Image | Use it when |
+|---|---|
+| `ghcr.io/biswa-pa/pa-shield/dashboard` | you want the PA Shield dashboard in place of the NetBird one |
+| `ghcr.io/biswa-pa/pa-shield/gateway` | you want the branded login page and one address for everything (not needed if your own proxy already routes the API and dashboard) |
+| `ghcr.io/biswa-pa/pa-shield/reset` | you want password reset, invite emails and Settings > Email Provider |
+
+For the whole stack from these images, use `docker-compose.standalone.yml` with `PA_IMAGE_PREFIX=ghcr.io/biswa-pa/pa-shield`.
+
+### Publishing
+
+`.github/workflows/publish.yml` builds and publishes all three images (amd64 and arm64) to GitHub Container Registry. A push to `main` publishes `:latest` and `:sha-<commit>`. A tag such as `v1.0.0` also publishes `:1.0.0`. After the first run, open each package on GitHub (Packages) and set its visibility to Public so others can pull without logging in.
+
 ## Run locally (development)
 
 ```bash
