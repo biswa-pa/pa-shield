@@ -53,10 +53,10 @@ services:
     restart: unless-stopped
 
   proxy:
-    image: nginx:alpine
-    volumes:
-      - ./local/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./brand:/brand:ro
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+    image: pa-shield/gateway:local
     ports:
       - "8088:80"
     depends_on: [dashboard, netbird-server, reset]

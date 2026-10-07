@@ -1,0 +1,87 @@
+# PA Shield, self-contained. No repo files are mounted: everything ships in images.
+#
+#   docker compose -f docker-compose.standalone.yml up -d
+#   open http://localhost:8088   (first visit creates the owner account)
+#
+# Settings (all optional) go in a .env file next to this one, see .env.standalone.example.
+# Images are pulled from PA_IMAGE_PREFIX if published there, otherwise built from this repo.
+name: ${PA_PROJECT:-pa-shield}
+
+
+services:
+  # One-shot: writes the NetBird server config and keeps its secrets stable.
+  init:
+    image: ${PA_IMAGE_PREFIX:-pa-shield}/gateway:${PA_VERSION:-1.0.0}
+    build: { context: ., dockerfile: gateway/Dockerfile }
+    entrypoint: ["/usr/local/bin/pa-init-config"]
+    environment:
+      PUBLIC_URL: ${PUBLIC_URL:-http://localhost:${PA_PORT:-8088}}
+      DISABLE_GEOLITE: ${DISABLE_GEOLITE:-true}
+    volumes:
+      - netbird_config:/cfg
+    restart: "no"
+
+  netbird-server:
+    image: netbirdio/netbird-server:${NETBIRD_SERVER_TAG:-0.74.4}
+    depends_on:
+      init: { condition: service_completed_successfully }
+    volumes:
+      - netbird_config:/etc/netbird:ro
+      - netbird_data:/var/lib/netbird
+    ports:
+      - "${PA_STUN_PORT:-3478}:3478/udp"
+    restart: unless-stopped
+
+  dashboard:
+    image: ${PA_IMAGE_PREFIX:-pa-shield}/dashboard:${PA_VERSION:-1.0.0}
+    build:
+      context: .
+      args:
+        NETBIRD_DASHBOARD_TAG: ${NETBIRD_DASHBOARD_TAG:-v2.90.3}
+    environment:
+      NETBIRD_MGMT_API_ENDPOINT: ${PUBLIC_URL:-http://localhost:${PA_PORT:-8088}}
+      AUTH_AUTHORITY: ${PUBLIC_URL:-http://localhost:${PA_PORT:-8088}}/oauth2
+      AUTH_CLIENT_ID: netbird-dashboard
+      AUTH_AUDIENCE: netbird-dashboard
+      AUTH_SUPPORTED_SCOPES: openid profile email groups
+      USE_AUTH0: "false"
+      AUTH_REDIRECT_URI: /nb-auth
+      AUTH_SILENT_REDIRECT_URI: /nb-silent-auth
+      NGINX_SSL_PORT: "443"
+      LETSENCRYPT_DOMAIN: none
+      PA_BRAND_NAME: PA Shield
+      PA_LOGO_SRC: /brand/logo.svg
+    depends_on: [netbird-server]
+    restart: unless-stopped
+
+  # Password reset, invite and test emails, and Settings > Email Provider.
+  reset:
+    image: ${PA_IMAGE_PREFIX:-pa-shield}/reset:${PA_VERSION:-1.0.0}
+    build: ./reset
+    env_file:
+      - path: smtp.env
+        required: false
+    environment:
+      PUBLIC_URL: ${PUBLIC_URL:-http://localhost:${PA_PORT:-8088}}
+      PA_BRAND_NAME: PA Shield
+      IDP_DB: /data/idp.db
+      NETBIRD_API: http://netbird-server:80
+      SETTINGS_PATH: /config/email-settings.json
+    volumes:
+      - netbird_data:/data
+      - reset_config:/config
+    depends_on: [netbird-server]
+    restart: unless-stopped
+
+  gateway:
+    image: ${PA_IMAGE_PREFIX:-pa-shield}/gateway:${PA_VERSION:-1.0.0}
+    build: { context: ., dockerfile: gateway/Dockerfile }
+    ports:
+      - "${PA_PORT:-8088}:80"
+    depends_on: [dashboard, netbird-server, reset]
+    restart: unless-stopped
+
+volumes:
+  netbird_config:
+  netbird_data:
+  reset_config:
